@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Platforms>AnyCPU;x86</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Markdig.SyntaxHighlighting" Version="1.1.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.4.1" />
+    <PackageReference Include="Westwind.AspNetCore.Markdown" Version="3.3.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Networking">
+      <HintPath>ThirdParty\Networking.dll</HintPath>
+    </Reference>
+    <Reference Include="Networking.Native">
+      <HintPath>ThirdParty\Networking.Native.dll</HintPath>
+    </Reference>
+    <Reference Include="SmartView2.Core">
+      <HintPath>ThirdParty\SmartView2.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="SmartView2.Devices">
+      <HintPath>ThirdParty\SmartView2.Devices.dll</HintPath>
+    </Reference>
+    <Reference Include="SPCApi">
+      <HintPath>ThirdParty\SPCApi.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="readme.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\stylesheet.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\stylesheet.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+
+</Project>
