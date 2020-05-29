@@ -2,7 +2,7 @@
 This API handles the required handshake payloads and encryption/decryption for Samsung J series smart TVs
 
 ## API Desgin
-The API is designed in `ASP .NET CORE 3.1` which also inclues an API Documentation called `SWAGGER` which can be accessed under `http://{IpOfAPI}:{PortOfAPI}/swagger`. 
+The API is designed in `ASP .NET CORE 3.1` which also inclues an API Documentation called `SWAGGER` which can be accessed under `[https://remote.liveconnect.pro/swagger`. 
 ### Swagger
 In `SWAGGER` all API Endpoints are listed with their `StatusCodes` and `ResponseTypes`. They also could be tested from there, but you will get an `401 Unauthorized` because we cannot set headers there (see authentication)
 
@@ -21,9 +21,16 @@ The configuration looks like this:
   "AllowedHosts": "*",
   "ApiGuid":  "1234" 
 }
-
 ```
 
+## Running in IIS
+
+To run the service in IIS properly you need the following requirements:
+* [.NET Core SDK](https://download.visualstudio.microsoft.com/download/pr/854ca330-4414-4141-9be8-5da3c4be8d04/3792eafd60099b3050313f2edfd31805/dotnet-sdk-3.1.101-win-x64.exe)
+* [Visual C++ 2013 Redistributable (**important**)](https://aka.ms/highdpimfc2013x86enu)
+* [ASP .NET Core Hosting Bundle](https://download.visualstudio.microsoft.com/download/pr/5bed16f2-fd1a-4027-bee3-3d6a1b5844cc/dd22ca2820fadb57fd5378e1763d27cd/dotnet-hosting-3.1.4-win.exe)
+
+Also you need to enable 32bit mode in IIS with `ApplicationPools->PairingService->AdvancedOptions->Enable 32-Bit Applications`
 ## Logging (implementation coming soon)
 
 ## How to use this API
@@ -34,20 +41,20 @@ All values in the `{}` must be replaced by the actual values.
 
 1. request a pin page on the TV with `http://{IpOfTv}:8080/ws/apps/CloudPINPage`
 2. post that pin (as body and header `Content-Type : application/json` ) to 
-	`http://{IpOfAPI}:{PortOfAPI}/pairing?pairingId={UniqeIdForSession}&resource=ServerHello`
+	`https://remote.liveconnect.pro/pairing?pairingId={UniqeIdForSession}&resource=ServerHello`
 3. the reponse is like:
 
 	    {
 		    "data": "010200000000000000008A00000006363534333231...(truncated)"
 	    }
 	   
-4. wrap the `DATA`into:
+4. wrap the `data`into:
 	```
 	{
 	    "auth_data": 
 	    {
 		    "auth_type" : "SPC",
-		    "GeneratorServerHello" : "{DATA}"
+		    "GeneratorServerHello" : "{data}"
 	    }
 	}
 	```
@@ -66,11 +73,11 @@ All values in the `{}` must be replaced by the actual values.
 
 7.  get the `GeneratorClientHello` and the `RequestId`with regex: `[{\"\w:]GeneratorClientHello[\\\":]*([\d\w]*)` and `[{\"\w:]request_id[\\\":]*([\d\w]*)`
 8. send the `GeneratorClientHello`to:
-	`http://{IpOfApi}:{PortOfApi}/pairing?pairingId={UniqeIdForSession}&resource=ClientHello`
+	`https://remote.liveconnect.pro/pairing?pairingId={UniqeIdForSession}&resource=ClientHello`
 	
 	this will internally validate against the previous data (true or false)
 9. send a POST request (without any body) to:
-	`http://{IpOfApi}:{PortOfApi}/pairing?pairingId={UniqeIdForSession}&resource=ServerAck`
+	`https://remote.liveconnect.pro/pairing?pairingId={UniqeIdForSession}&resource=ServerAck`
 10. the reponse is like:
 	```
 	{
@@ -104,11 +111,11 @@ All values in the `{}` must be replaced by the actual values.
 	```
 14. grab the `ClientAckMsg` with `[{\"\w:]ClientAckMsg[\\\":]*([\d\w]*)` and the `SessionId` with `[{\"\w:]session_id[\\\":]*([\d\w]*)`
 15. send the  `ClientAckMsg` (as body with header `Content-Type : application/json`) to:
-	`http://{IpOfApi}:{PortOfApi}/pairing?pairingId={UniqeIdForSession}&resource=ClientAck` 
+	`https://remote.liveconnect.pro/pairing?pairingId={UniqeIdForSession}&resource=ClientAck` 
 	
 	this will internally validate against the previous data (true or false)
 16. send a POST request (without any body) to:
-	`http://{IpOfApi}:{PortOfApi}/pairing?pairingId={UniqeIdForSession}&resource=Session`
+	`https://remote.liveconnect.pro/pairing?pairingId={UniqeIdForSession}&resource=Session`
 17. the response is like:
 	```
 	{

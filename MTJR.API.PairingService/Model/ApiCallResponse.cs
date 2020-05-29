@@ -14,7 +14,7 @@ namespace MTJR.API.PairingService.Model
         {
             Method = method;
             Url = url;
-            Data = data;
+            Data = data.Replace("\"", "");
         }
     }
 }
