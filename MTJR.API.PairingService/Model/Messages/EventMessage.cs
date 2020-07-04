@@ -18,10 +18,6 @@ namespace MTJR.API.PairingService.Model.Messages
         {
             Message = message;
             Name = name.ToString();
-            //serialize object to json string
-            var serialized = JsonConvert.SerializeObject(message);
-            //get string as byte array
-            var bytes = Encoding.UTF8.GetBytes(serialized);
             //encrypt data with logged in pin and session id (wrapped in an AesSecurityProvider)
             Args[0] = provider.EncryptData(message);
         }

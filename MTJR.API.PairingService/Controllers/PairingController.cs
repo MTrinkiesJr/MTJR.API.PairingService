@@ -8,6 +8,7 @@ using MTJR.API.PairingService.Extensions;
 using MTJR.API.PairingService.Handler;
 using MTJR.API.PairingService.Model;
 using MTJR.API.PairingService.Model.Messages;
+using Networking.Native;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -122,7 +123,7 @@ namespace MTJR.API.PairingService.Controllers
         [HttpGet("data/encrypted")]
         [ProducesResponseType(typeof(string), 200)]
         [ProducesResponseType(typeof(string), 400)]
-        public IActionResult Data([FromQuery] string pairingId, [FromQuery] [JsonConverter(typeof(StringEnumConverter))] EncryptedResourceType resource)
+        public IActionResult Data([FromQuery] string pairingId, [FromQuery] int sessionId, [FromQuery] [JsonConverter(typeof(StringEnumConverter))] EncryptedResourceType resource)
         {
             var pairingSession = IsValidPairingSession(pairingId, HandshakeResourceType.Session);
 
@@ -131,17 +132,20 @@ namespace MTJR.API.PairingService.Controllers
                 return BadRequest(pairingSession.Item1);
             }
 
+            var key = pairingSession.Item2.Key;
+            var securityProvider = new AesSecurityProvider(key, sessionId);
+
             string message = "5::/com.samsung.companion:";
             switch (resource)
             {
                 case EncryptedResourceType.RegisterRemoteControl:
-                    message += new EventMessage(EventMessageName.registerPush, new RegisterRemoteControlMessage(), pairingSession.Item2.SecurityProvider).Serialize();
+                    message += new EventMessage(EventMessageName.registerPush, new RegisterRemoteControlMessage(), securityProvider).Serialize();
                     break;
                 case EncryptedResourceType.RegisterSecondTvMessage:
-                    message += new EventMessage(EventMessageName.registerPush, new RegisterSecondTvMessage(), pairingSession.Item2.SecurityProvider).Serialize();
+                    message += new EventMessage(EventMessageName.callCommon, new RegisterSecondTvMessage(), securityProvider).Serialize();
                     break;
                 case EncryptedResourceType.GetDuidMessage:
-                    message += new EventMessage(EventMessageName.registerPush, new GetDuidMessage(), pairingSession.Item2.SecurityProvider).Serialize();
+                    message += new EventMessage(EventMessageName.callCommon, new GetDuidMessage(), securityProvider).Serialize();
                     break;
                 default:
                     return BadRequest("no resource given");
@@ -154,7 +158,7 @@ namespace MTJR.API.PairingService.Controllers
         [ProducesResponseType(typeof(string), 200)]
         [ProducesResponseType(typeof(string), 400)]
         [ProducesResponseType(typeof(string), 404)]
-        public IActionResult Button([FromQuery] string pairingId, [FromQuery] string buttonId)
+        public IActionResult Button([FromQuery] string pairingId, [FromQuery] int sessionId, [FromQuery] string buttonId)
         {
             var pairingSession = IsValidPairingSession(pairingId, HandshakeResourceType.Session);
 
@@ -166,7 +170,10 @@ namespace MTJR.API.PairingService.Controllers
                         $"to call a button you get the encrypted message to get the duid from: {Constants.DuidUrl}. Then send that data via the websocket to the tv and decrypt the responnse on: {Constants.DecryptUrl}. That will store the TV identifier (DUID) in the session");
                 }
 
-                var message = "5::/com.samsung.companion:" + new EventMessage(EventMessageName.callCommon, new ButtonMessage(buttonId, pairingSession.Item2.Duid), pairingSession.Item2.SecurityProvider)
+                var key = pairingSession.Item2.Key;
+                var securityProvider = new AesSecurityProvider(key, sessionId);
+
+                var message = "5::/com.samsung.companion:" + new EventMessage(EventMessageName.callCommon, new ButtonMessage(buttonId, pairingSession.Item2.Duid), securityProvider)
                     .Serialize();
                 return Ok(message);
             }
@@ -178,13 +185,14 @@ namespace MTJR.API.PairingService.Controllers
         [ProducesResponseType(typeof(string), 200)]
         [ProducesResponseType(typeof(string), 400)]
 
-        public IActionResult Decrypt([FromQuery] string pairingId, [FromBody] string data)
+        public IActionResult Decrypt([FromQuery] string pairingId, [FromQuery] int sessionId, [FromBody] DataObject dataObj)
         {
             var pairingSession = IsValidPairingSession(pairingId, HandshakeResourceType.Session);
 
             if (pairingSession.Item1 == "OK")
             {
-                return Ok(pairingSession.Item2.Decrypt(data));
+                var decrypted = pairingSession.Item2.Decrypt(dataObj.Data, sessionId);
+                return Ok(decrypted);
             }
 
             return BadRequest(pairingSession.Item1);

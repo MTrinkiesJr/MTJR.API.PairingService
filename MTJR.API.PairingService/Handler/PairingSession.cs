@@ -16,10 +16,9 @@ namespace MTJR.API.PairingService.Handler
         private bool _parseClientAck;
         public string Id { get; }
         public string Pin { get; private set; }
-        public AesSecurityProvider SecurityProvider { get; private set; }
         public HandshakeResourceType Step { get; private set; } = HandshakeResourceType.None;
         public string Duid { get; private set; }
-        public string Key { get; private set; }
+        public byte[] Key { get; private set; }
 
         public PairingSession(string id)
         {
@@ -76,20 +75,21 @@ namespace MTJR.API.PairingService.Handler
         {
             if (Step == HandshakeResourceType.Session)
             {
-                return _spcApi.GetKey();
+                return Key = _spcApi.GetKey();
             }
 
             return null;
         }
 
-        public string Decrypt(string data)
+        public string Decrypt(string data, int sessionId)
         {
             if (Step == HandshakeResourceType.Session)
             {
-                var regex = "(5::\\/com.samsung.companion:)([{}\\\":,\\w\\]]*)[[]([\\d,]*)";
-                var body = Regex.Match(data, regex).Groups[3].Value;
-                CheckDuidMessage(body);
-                return SecurityProvider.DecryptData(body);
+                var securityProvider = new AesSecurityProvider(Key, sessionId);
+                var decrypted = securityProvider.DecryptData(data);
+
+                CheckDuidMessage(decrypted);
+                return decrypted;
             }
             return null;
         }
